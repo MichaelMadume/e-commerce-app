@@ -3,7 +3,7 @@ import { NbMediaBreakpointsService, NbMenuService, NbSidebarService, NbThemeServ
 
 import { UserData } from '../../../@core/data/users';
 import { LayoutService } from '../../../@core/utils';
-import { map, takeUntil } from 'rxjs/operators';
+import { map, takeUntil, take, filter } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 
 @Component({
@@ -15,6 +15,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   private destroy$: Subject<void> = new Subject<void>();
   userPictureOnly: boolean = false;
+  autoToggleMenu: boolean = false;
   user: any;
 
   themes = [
@@ -53,7 +54,8 @@ export class HeaderComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe((users: any) => this.user = users.nick);
 
-    const { xl } = this.breakpointService.getBreakpointsMap();
+    const { xl, lg } = this.breakpointService.getBreakpointsMap();
+
     this.themeService.onMediaQueryChange()
       .pipe(
         map(([, currentBreakpoint]) => currentBreakpoint.width < xl),
@@ -61,12 +63,25 @@ export class HeaderComponent implements OnInit, OnDestroy {
       )
       .subscribe((isLessThanXl: boolean) => this.userPictureOnly = isLessThanXl);
 
+
+    this.themeService.onMediaQueryChange()
+      .pipe(
+        map(([, currentBreakpoint]) => currentBreakpoint.width < lg),
+        takeUntil(this.destroy$),
+      )
+      .subscribe((isLessThanL: boolean) => this.autoToggleMenu = isLessThanL);
+
     this.themeService.onThemeChange()
       .pipe(
         map(({ name }) => name),
         takeUntil(this.destroy$),
       )
       .subscribe(themeName => this.currentTheme = themeName);
+
+    this.menuService.onItemClick().pipe(
+      filter(val => this.autoToggleMenu),
+      takeUntil(this.destroy$),
+    ).subscribe(() => this.toggleSidebar());
   }
 
   ngOnDestroy() {
