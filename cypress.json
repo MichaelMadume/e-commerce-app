@@ -1,4 +1,5 @@
 {
     "viewportWidth": 1536,
-    "viewportHeight": 864
+    "viewportHeight": 864,
+    "baseUrl": "https://tumia-e-commerce.web.app/"
 }
